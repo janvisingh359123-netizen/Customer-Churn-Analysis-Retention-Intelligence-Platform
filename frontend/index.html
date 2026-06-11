@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Retention Intelligence Platform</title>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Plotly.js for premium enterprise data visualizations -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Custom CSS Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Prevent FOUC (Flash of Unstyled Content) for Dark Theme setting -->
+    <meta name="color-scheme" content="light dark">
+    <script>
+        (function() {
+            const storedTheme = localStorage.getItem("color-scheme");
+            const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            const theme = storedTheme || (systemPrefersDark ? "dark" : "light");
+            document.documentElement.setAttribute("data-theme", theme);
+        })();
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-brain brand-icon"></i>
+                <div class="brand-text">
+                    <h2>Retention.AI</h2>
+                    <span>Enterprise Churn Suite</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-page="page-summary">
+                        <i class="fa-solid fa-chart-line"></i><span>Executive Summary</span>
+                    </li>
+                    <li class="nav-item" data-page="page-trends">
+                        <i class="fa-solid fa-timeline"></i><span>Churn Trends</span>
+                    </li>
+                    <li class="nav-item" data-page="page-segmentation">
+                        <i class="fa-solid fa-chart-pie"></i><span>Demographics</span>
+                    </li>
+                    <li class="nav-item" data-page="page-rfm">
+                        <i class="fa-solid fa-ranking-star"></i><span>RFM Loyalty</span>
+                    </li>
+                    <li class="nav-item" data-page="page-behavior">
+                        <i class="fa-solid fa-user-gear"></i><span>Behavioral Analysis</span>
+                    </li>
+                    <li class="nav-item" data-page="page-revenue">
+                        <i class="fa-solid fa-sack-dollar"></i><span>Revenue Simulator</span>
+                    </li>
+                    <li class="nav-item" data-page="page-forecasting">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i><span>Forecasting</span>
+                    </li>
+                    <li class="nav-item" data-page="page-customer360">
+                        <i class="fa-solid fa-address-card"></i><span>Customer 360</span>
+                    </li>
+                    <li class="nav-item" data-page="page-recommendations">
+                        <i class="fa-solid fa-clipboard-list"></i><span>Action Playbooks</span>
+                    </li>
+                    <li class="nav-item" data-page="page-model">
+                        <i class="fa-solid fa-gears"></i><span>Model Analytics</span>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">JS</div>
+                    <div class="user-info">
+                        <strong>Jahanvi Singh</strong>
+                        <span>Lead Data Analyst</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Wrapper -->
+        <main class="main-content">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 id="page-title">Executive Overview</h1>
+                    <p class="text-secondary" id="page-subtitle">Real-time enterprise metrics & retention intelligence</p>
+                </div>
+                
+                <div class="topbar-right">
+                    <button id="btn-retrain" class="btn btn-outline" title="Retrain ML model & refresh pipeline">
+                        <i class="fa-solid fa-arrows-rotate"></i> Retrain Model
+                    </button>
+                    <button id="btn-pdf" class="btn btn-outline" title="Print dashboard layout as PDF">
+                        <i class="fa-solid fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button id="btn-theme-toggle" class="btn btn-icon" title="Toggle Light/Dark Theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Global Interactive Filter Bar -->
+            <section class="filter-bar">
+                <div class="filter-group">
+                    <label for="filter-region"><i class="fa-solid fa-map-location-dot"></i> Region</label>
+                    <select id="filter-region" class="filter-select">
+                        <option value="All">All Regions</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-age"><i class="fa-solid fa-calendar-days"></i> Age Group</label>
+                    <select id="filter-age" class="filter-select">
+                        <option value="All">All Ages</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-contract"><i class="fa-solid fa-file-contract"></i> Contract Type</label>
+                    <select id="filter-contract" class="filter-select">
+                        <option value="All">All Contracts</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-risk"><i class="fa-solid fa-triangle-exclamation"></i> Churn Risk</label>
+                    <select id="filter-risk" class="filter-select">
+                        <option value="All">All Risks</option>
+                    </select>
+                </div>
+                <button id="btn-reset-filters" class="btn btn-sm btn-outline-danger">Reset Filters</button>
+            </section>
+
+            <!-- Active Filters Chips -->
+            <div class="active-filters-container" id="active-filters-pills" style="display: none;">
+                <span class="pills-label">Active Filters:</span>
+                <div class="pills-list" id="pills-list"></div>
+            </div>
+            
+            <!-- PAGE CONTENT ROUTER PANELS -->
+            <div class="content-body">
+                
+                <!-- PAGE 1: EXECUTIVE OVERVIEW -->
+                <div class="dashboard-page active-page" id="page-summary">
+                    <!-- SaaS Executive Welcome Banner -->
+                    <div class="welcome-banner mb-20">
+                        <div class="welcome-text">
+                            <h2>Welcome Back, Jahanvi Singh</h2>
+                            <p>Here is your customer retention intelligence briefing. Below are key alert summaries that need your attention today.</p>
+                        </div>
+                        <div class="welcome-stats">
+                            <div class="banner-stat">
+                                <span class="stat-lbl">Active MRR Pool</span>
+                                <strong id="banner-mrr">$0.00</strong>
+                            </div>
+                            <div class="banner-stat">
+                                <span class="stat-lbl">Net Revenue Retention (NRR)</span>
+                                <strong id="banner-nrr">0.0%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card glow-teal">
+                            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="kpi-value" id="kpi-total-cust">--</div>
+                            <div class="kpi-label">Total Monitored Customers</div>
+                        </div>
+                        <div class="kpi-card glow-rose">
+                            <div class="kpi-icon"><i class="fa-solid fa-user-slash"></i></div>
+                            <div class="kpi-value" id="kpi-churn-rate">--%</div>
+                            <div class="kpi-label">Overall Churn Rate</div>
+                        </div>
+                        <div class="kpi-card glow-teal">
+                            <div class="kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="kpi-value" id="kpi-retention-rate">--%</div>
+                            <div class="kpi-label">Retention Rate</div>
+                        </div>
+                        <div class="kpi-card glow-violet">
+                            <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                            <div class="kpi-value" id="kpi-mrr">$--</div>
+                            <div class="kpi-label">Monthly Recurring Revenue (MRR)</div>
+                        </div>
+                        <div class="kpi-card glow-violet">
+                            <div class="kpi-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                            <div class="kpi-value" id="kpi-arr">$--</div>
+                            <div class="kpi-label">Annual Recurring Revenue (ARR)</div>
+                        </div>
+                        <div class="kpi-card glow-gold">
+                            <div class="kpi-icon"><i class="fa-solid fa-gem"></i></div>
+                            <div class="kpi-value" id="kpi-clv">$--</div>
+                            <div class="kpi-label">Avg Customer Lifetime Value</div>
+                        </div>
+                        <div class="kpi-card glow-rose">
+                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-value" id="kpi-revenue-risk">$--</div>
+                            <div class="kpi-label">Revenue at Risk (MRR)</div>
+                        </div>
+                        <div class="kpi-card glow-rose">
+                            <div class="kpi-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <div class="kpi-value" id="kpi-churn-cost">$--</div>
+                            <div class="kpi-label">Estimated Churn Cost</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2-1 mt-20">
+                        <!-- Auto-generated Executive Summary -->
+                        <div class="dashboard-card border-left-violet">
+                            <h3><i class="fa-solid fa-envelope-open-text text-violet"></i> Automated Executive Summary</h3>
+                            <div class="divider"></div>
+                            <div id="exec-report-body" class="report-content">
+                                <div class="pulse-loader"></div> Loading AI business insights...
+                            </div>
+                        </div>
+                        <!-- Strategic Action Priorities -->
+                        <div class="dashboard-card border-left-gold">
+                            <h3><i class="fa-solid fa-clipboard-check text-gold"></i> Retention Action Plan</h3>
+                            <div class="divider"></div>
+                            <ul class="action-list" id="exec-recommendations-list">
+                                <li>Loading action items...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 2: CHURN TRENDS -->
+                <div class="dashboard-page" id="page-trends">
+                    <div class="grid-2">
+                        <div class="dashboard-card">
+                            <h3>Monthly Churn & Lost Revenue Trend</h3>
+                            <div id="chart-monthly-trends" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Quarterly Customer Losses</h3>
+                            <div id="chart-quarterly-trends" class="chart-container"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card mt-20">
+                        <h3>Year-over-Year Attrition Comparison</h3>
+                        <div id="chart-yearly-trends" class="chart-container"></div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 3: CUSTOMER SEGMENTATION -->
+                <div class="dashboard-page" id="page-segmentation">
+                    <div class="grid-2">
+                        <div class="dashboard-card">
+                            <h3>Churn Rate by Age Cohort</h3>
+                            <div id="chart-segment-age" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Gender Distribution & Churn Rate</h3>
+                            <div id="chart-segment-gender" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Churn Risk by Contract Segment</h3>
+                            <div id="chart-segment-contract" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Retention Decay by Tenure Range</h3>
+                            <div id="chart-segment-tenure" class="chart-container"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Acquisition Cohort Heatmap -->
+                    <div class="dashboard-card mt-20">
+                        <h3>Customer Acquisition Cohort Retention Heatmap</h3>
+                        <p class="text-secondary mt-5 mb-15">Tracks month-over-month retention percentages for monthly signup cohorts over a 12-month lifecycle decay curve.</p>
+                        <div class="divider"></div>
+                        <div class="table-container" id="cohort-table-container">
+                            <div class="pulse-loader" style="margin: 20px auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 4: RFM ANALYSIS -->
+                <div class="dashboard-page" id="page-rfm">
+                    <div class="grid-2-1">
+                        <div class="dashboard-card">
+                            <h3>RFM Customer Segmentation Distribution</h3>
+                            <div id="chart-rfm-donut" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Average Monthly Spending by Segment</h3>
+                            <div id="chart-rfm-bar" class="chart-container"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card mt-20">
+                        <h3>RFM Cohorts Profiles & Attrition Matrix</h3>
+                        <div class="table-container">
+                            <table class="data-table" id="table-rfm-stats">
+                                <thead>
+                                    <tr>
+                                        <th>RFM Segment Name</th>
+                                        <th>Active Accounts</th>
+                                        <th>Avg Recency (Days)</th>
+                                        <th>Avg Frequency (Sessions/Mo)</th>
+                                        <th>Avg Monetary (Monthly Charge)</th>
+                                        <th>Segment Churn Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 5: BEHAVIORAL ANALYTICS -->
+                <div class="dashboard-page" id="page-behavior">
+                    <div class="grid-3">
+                        <div class="dashboard-card">
+                            <h3>Satisfaction Score vs Churn Rate</h3>
+                            <div id="chart-behavior-sat" class="chart-container-sm"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Support Ticket Volume impact</h3>
+                            <div id="chart-behavior-tickets" class="chart-container-sm"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Monthly Session Counts</h3>
+                            <div id="chart-behavior-sessions" class="chart-container-sm"></div>
+                        </div>
+                    </div>
+                    <div class="grid-2 mt-20">
+                        <div class="dashboard-card">
+                            <h3>Complaints History vs Churn Rate</h3>
+                            <div id="chart-behavior-complaints" class="chart-container-sm"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Avg Session Duration Bucket</h3>
+                            <div id="chart-behavior-duration" class="chart-container-sm"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 6: REVENUE RISK & WHAT-IF SIMULATOR -->
+                <div class="dashboard-page" id="page-revenue">
+                    <div class="grid-1-2">
+                        <!-- What-if Interactive Control Panel -->
+                        <div class="dashboard-card glow-violet-border">
+                            <h3><i class="fa-solid fa-sliders text-violet"></i> What-If Retention Simulator</h3>
+                            <p class="text-secondary mt-5 mb-15">Simulate how strategic operations and support upgrades lower forecasted churn.</p>
+                            <div class="divider"></div>
+                            
+                            <div class="simulator-slider">
+                                <div class="slider-header">
+                                    <span>Contract Shift (Monthly → Annual)</span>
+                                    <span id="val-contract-shift" class="badge bg-violet">0%</span>
+                                </div>
+                                <input type="range" id="slider-contract-shift" min="0" max="100" value="0" step="5">
+                                <span class="slider-hint">Converts monthly subscribers to long-term annual contracts.</span>
+                            </div>
+                            
+                            <div class="simulator-slider mt-15">
+                                <div class="slider-header">
+                                    <span>Satisfaction Boost (Score 1-2 → 3-4)</span>
+                                    <span id="val-sat-boost" class="badge bg-teal">0%</span>
+                                </div>
+                                <input type="range" id="slider-sat-boost" min="0" max="100" value="0" step="5">
+                                <span class="slider-hint">Resolves accounts with support issues.</span>
+                            </div>
+                            
+                            <div class="simulator-slider mt-15">
+                                <div class="slider-header">
+                                    <span>Targeted Retention Offer (CAC Impact)</span>
+                                    <span id="val-camp-success" class="badge bg-gold">0%</span>
+                                </div>
+                                <input type="range" id="slider-camp-success" min="0" max="100" value="0" step="5">
+                                <span class="slider-hint">Targets critical-risk segment with promotions.</span>
+                            </div>
+                            
+                            <button id="btn-run-simulation" class="btn btn-violet w-100 mt-20">Calculate Impact</button>
+                        </div>
+                        
+                        <!-- Simulation Output Display -->
+                        <div class="dashboard-card">
+                            <h3>Projected Revenue Savings & Churn Offset</h3>
+                            <div class="divider"></div>
+                            <div class="grid-2">
+                                <div class="metric-block bg-translucent-violet">
+                                    <span class="label">Expected MRR Saved</span>
+                                    <h2 id="sim-mrr-saved" class="text-violet">$0.00</h2>
+                                </div>
+                                <div class="metric-block bg-translucent-teal">
+                                    <span class="label">Expected ARR Saved</span>
+                                    <h2 id="sim-arr-saved" class="text-teal">$0.00</h2>
+                                </div>
+                                <div class="metric-block bg-translucent-rose">
+                                    <span class="label">Projected Churn Rate</span>
+                                    <h2 id="sim-projected-churn">--%</h2>
+                                    <span class="subtext text-secondary">Baseline: <strong id="sim-baseline-churn">--%</strong></span>
+                                </div>
+                                <div class="metric-block bg-translucent-gold">
+                                    <span class="label">Customer Attrition Prevented</span>
+                                    <h2 id="sim-saved-count" class="text-gold">0</h2>
+                                    <span class="subtext text-secondary">Accounts preserved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- High-Value Customers at Risk Table -->
+                    <div class="dashboard-card mt-20">
+                        <div class="flex-between">
+                            <h3><i class="fa-solid fa-circle-exclamation text-rose"></i> High Value Active Customers at Immediate Risk</h3>
+                            <button id="btn-export-csv" class="btn btn-sm btn-outline"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="table-container max-height-350">
+                            <table class="data-table" id="table-high-value-risk">
+                                <thead>
+                                    <tr>
+                                        <th>Customer ID</th>
+                                        <th>Name</th>
+                                        <th>Monthly Charge (MRR)</th>
+                                        <th>Satisfaction Score</th>
+                                        <th>Churn Probability</th>
+                                        <th>Risk Segment</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 7: PREDICTIVE FORECASTING -->
+                <div class="dashboard-page" id="page-forecasting">
+                    <div class="grid-2-1">
+                        <div class="dashboard-card">
+                            <h3>Monthly Active & Churn Customer Forecast (12 Months Projection)</h3>
+                            <div id="chart-forecast-customers" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h3>Revenue Lost Forecast (MRR)</h3>
+                            <div id="chart-forecast-revenue" class="chart-container"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-grid mt-20">
+                        <div class="kpi-card border-left-teal">
+                            <div class="kpi-value text-teal" id="forecast-active-3m">--</div>
+                            <div class="kpi-label">Active Customers (Next 3 Months)</div>
+                        </div>
+                        <div class="kpi-card border-left-violet">
+                            <div class="kpi-value text-violet" id="forecast-active-6m">--</div>
+                            <div class="kpi-label">Active Customers (Next 6 Months)</div>
+                        </div>
+                        <div class="kpi-card border-left-gold">
+                            <div class="kpi-value text-gold" id="forecast-active-12m">--</div>
+                            <div class="kpi-label">Active Customers (Next 12 Months)</div>
+                        </div>
+                        <div class="kpi-card border-left-rose">
+                            <div class="kpi-value text-rose" id="forecast-revenue-lost-12m">$--</div>
+                            <div class="kpi-label">Cumulative Lost Revenue (Next 12M)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 8: CUSTOMER 360 DEGREE EXPLORER -->
+                <div class="dashboard-page" id="page-customer360">
+                    <div class="search-section">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="input-search-customer" placeholder="Search Customer ID (e.g. CUST00001, CUST00250)...">
+                            <button id="btn-search-customer" class="btn btn-violet">Search Profile</button>
+                        </div>
+                    </div>
+                    
+                    <div id="customer-360-container" class="mt-20">
+                        <!-- Landing instructions -->
+                        <div class="empty-state">
+                            <i class="fa-solid fa-address-card empty-icon"></i>
+                            <h3>Search Customer 360 Profile</h3>
+                            <p>Enter a Customer ID above to retrieve interactive usage charts, satisfaction metrics, explainable AI churn drivers, and targeted retention steps.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 9: RETENTION ACTION PLAYBOOKS -->
+                <div class="dashboard-page" id="page-recommendations">
+                    <div class="grid-2">
+                        <!-- Playbook 1 -->
+                        <div class="dashboard-card border-left-rose">
+                            <div class="flex-between">
+                                <h3 class="text-rose"><i class="fa-solid fa-hand-holding-dollar"></i> Playbook A: Contract Migration</h3>
+                                <span class="badge bg-rose">Target: Monthly Plans</span>
+                            </div>
+                            <div class="divider"></div>
+                            <p class="mb-15 text-secondary"><strong>Trigger Condition:</strong> Active customers on Monthly contract segments exhibiting churn probabilities above 60%.</p>
+                            <h4>Actions Required:</h4>
+                            <ul class="styled-list">
+                                <li>Send automated "Annual Loyalty Upgrade" email campaign offering a 15% discount on Annual terms.</li>
+                                <li>Flag account in CRM system with task assign: "Call customer to review contract billing".</li>
+                                <li>Present self-service upgrade option on customer account profile settings page.</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Playbook 2 -->
+                        <div class="dashboard-card border-left-violet">
+                            <div class="flex-between">
+                                <h3 class="text-violet"><i class="fa-solid fa-screwdriver-wrench"></i> Playbook B: Satisfaction Recovery</h3>
+                                <span class="badge bg-violet">Target: CSAT <= 2</span>
+                            </div>
+                            <div class="divider"></div>
+                            <p class="mb-15 text-secondary"><strong>Trigger Condition:</strong> Active accounts with Satisfaction Score below 3 or complaints filed within the last 30 days.</p>
+                            <h4>Actions Required:</h4>
+                            <ul class="styled-list">
+                                <li>Initiate personal customer support executive outreach callback within 24 hours.</li>
+                                <li>Establish direct route to premium Support Desk for any subsequent support tickets.</li>
+                                <li>Send an executive "issue resolution survey" to confirm corrective measures were met.</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Playbook 3 -->
+                        <div class="dashboard-card border-left-gold">
+                            <div class="flex-between">
+                                <h3 class="text-gold"><i class="fa-solid fa-bullseye"></i> Playbook C: VIP Engagement Drive</h3>
+                                <span class="badge bg-gold">Target: Champions Segment</span>
+                            </div>
+                            <div class="divider"></div>
+                            <p class="mb-15 text-secondary"><strong>Trigger Condition:</strong> Active accounts categorized in 'Champions' or 'Loyal Customers' RFM segments with declining platform sessions.</p>
+                            <h4>Actions Required:</h4>
+                            <ul class="styled-list">
+                                <li>Send invitations to participate in exclusive product feedback panels / beta test releases.</li>
+                                <li>Award priority client rewards (e.g., custom account perks, free extension items).</li>
+                                <li>Schedule quarterly account partnership reviews (for high-value business clients).</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Playbook 4 -->
+                        <div class="dashboard-card border-left-teal">
+                            <div class="flex-between">
+                                <h3 class="text-teal"><i class="fa-solid fa-compass-drafting"></i> Playbook D: Reactivation Campaigns</h3>
+                                <span class="badge bg-teal">Target: Declining Engagement</span>
+                            </div>
+                            <div class="divider"></div>
+                            <p class="mb-15 text-secondary"><strong>Trigger Condition:</strong> Customers with zero platform log-ins over 14 days and session duration declines exceeding 40%.</p>
+                            <h4>Actions Required:</h4>
+                            <ul class="styled-list">
+                                <li>Trigger personalized dynamic newsletter displaying highlights of unused features.</li>
+                                <li>Offer "Re-engage promo" (e.g. $5 credit or 7-day complimentary feature access).</li>
+                                <li>Send targeted push notifications outlining software patches or major new content updates.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAGE 10: MODEL PERFORMANCE -->
+                <div class="dashboard-page" id="page-model">
+                    <div class="dashboard-card">
+                        <h3>Machine Learning Algorithm Comparison Matrix</h3>
+                        <p class="text-secondary mt-5">Evaluated on 10,000 holdout customer profiles. Evaluates accuracy, sensitivity, and calibration curves.</p>
+                        <div class="divider"></div>
+                        <div class="table-container">
+                            <table class="data-table" id="table-model-comparison">
+                                <thead>
+                                    <tr>
+                                        <th>Algorithm Model Type</th>
+                                        <th>Model Accuracy</th>
+                                        <th>Model Precision</th>
+                                        <th>Model Recall</th>
+                                        <th>Model F1 Score</th>
+                                        <th>Model ROC-AUC</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2-1 mt-20">
+                        <div class="dashboard-card">
+                            <h3>Top Feature Importances (Global Drivers)</h3>
+                            <div id="chart-model-importance" class="chart-container"></div>
+                        </div>
+                        <div class="dashboard-card border-left-violet">
+                            <h3>Model Architecture</h3>
+                            <div class="divider"></div>
+                            <div class="architecture-flow text-secondary">
+                                <div class="step"><i class="fa-solid fa-database"></i> <strong>Data Ingestion</strong> (50k Relational Logs)</div>
+                                <div class="arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="step"><i class="fa-solid fa-wand-magic"></i> <strong>Feature Preprocessing</strong> (Scaler & OHE)</div>
+                                <div class="arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="step"><i class="fa-solid fa-microchip"></i> <strong>Automatic Best Classifier Selection</strong></div>
+                                <div class="arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="step"><i class="fa-solid fa-file-export"></i> <strong>Scoring Updates</strong> (FastAPI Endpoint)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+    
+    <!-- Retraining Notification Toast -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check"></i> <span id="toast-message">Model retraining completed successfully!</span>
+    </div>
+
+    <!-- Javascript Entry Script -->
+    <script src="app.js"></script>
+</body>
+</html>

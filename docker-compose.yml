@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. FastAPI Application Service
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_TYPE=sqlite # Can switch to 'postgres'
+      - DATABASE_URL=postgresql://churn_admin:retention_pass@db:5432/churn_db
+    volumes:
+      - ./data:/app/data
+      - ./ml:/app/ml
+    depends_on:
+      - db
+    restart: always
+
+  # 2. PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=churn_admin
+      - POSTGRES_PASSWORD=retention_pass
+      - POSTGRES_DB=churn_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  pgdata:
